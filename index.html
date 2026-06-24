@@ -1,0 +1,360 @@
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0ff; min-height: 100vh; }
+
+  .top-bar { background: #1a1a2e; border-bottom: 1px solid #2a2a4a; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 18px; font-weight: 700; color: #7c83fd; letter-spacing: 1px; }
+  .logo span { color: #fff; }
+  .nav-links { display: flex; gap: 18px; font-size: 13px; }
+  .nav-links a { color: #aaa; text-decoration: none; cursor: pointer; }
+  .nav-links a:hover { color: #7c83fd; }
+  .badge { background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #7c83fd; }
+
+  .hero { text-align: center; padding: 36px 20px 24px; }
+  .hero h1 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #7c83fd, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .hero p { color: #888; font-size: 14px; }
+
+  .tabs { display: flex; gap: 8px; padding: 0 20px 20px; justify-content: center; flex-wrap: wrap; }
+  .tab { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 20px; padding: 6px 16px; font-size: 13px; cursor: pointer; color: #aaa; transition: all 0.2s; }
+  .tab:hover, .tab.active { background: #7c83fd; border-color: #7c83fd; color: #fff; }
+
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    padding: 0 20px 40px;
+  }
+
+  .game-card {
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    position: relative;
+  }
+  .game-card:hover {
+    transform: translateY(-4px);
+    border-color: #7c83fd;
+    box-shadow: 0 8px 32px rgba(124,131,253,0.2);
+  }
+
+  .game-thumb {
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    overflow: hidden;
+  }
+  .game-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .game-info { padding: 12px 14px 14px; }
+  .game-title { font-size: 14px; font-weight: 700; color: #e0e0ff; margin-bottom: 3px; }
+  .game-tag { font-size: 11px; color: #666; }
+
+  /* Hot badge */
+  .hot-badge {
+    position: absolute; top: 10px; right: 10px;
+    background: #ef4444; color: #fff;
+    font-size: 10px; font-weight: 700;
+    padding: 2px 7px; border-radius: 20px;
+    letter-spacing: 0.05em;
+  }
+
+  /* Modal */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 18px;
+    width: 95vw; max-width: 1100px; height: 90vh;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+  .modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 18px; border-bottom: 1px solid #2a2a4a; flex-shrink: 0;
+  }
+  .modal-title { font-size: 15px; font-weight: 700; color: #e0e0ff; }
+  .modal-actions { display: flex; gap: 8px; align-items: center; }
+  .close-btn {
+    background: #2a2a4a; border: none; color: #aaa;
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .close-btn:hover { background: #ef4444; color: #fff; }
+  .fullscreen-btn {
+    background: #2a2a4a; border: none; color: #aaa;
+    padding: 5px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 12px; font-weight: 600;
+  }
+  .fullscreen-btn:hover { background: #7c83fd; color: #fff; }
+  .modal-body { flex: 1; overflow: hidden; }
+  .game-iframe { width: 100%; height: 100%; border: none; display: block; }
+</style>
+
+<div style="min-height:100vh; background:#0f0f1a;">
+  <div class="top-bar">
+    <div class="logo">Study<span>Zone</span> 🎓</div>
+    <div class="nav-links">
+      <a>Home</a>
+      <a>About</a>
+    </div>
+    <div class="badge">Unblocked ✓</div>
+  </div>
+
+  <div class="hero">
+    <h1>Play & Learn</h1>
+    <p>All games unblocked — works at school, on Chromebooks, anywhere 🎮</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="filterGames('all',this)">All Games</div>
+    <div class="tab" onclick="filterGames('arcade',this)">Arcade</div>
+    <div class="tab" onclick="filterGames('action',this)">Action</div>
+    <div class="tab" onclick="filterGames('racing',this)">Racing</div>
+    <div class="tab" onclick="filterGames('puzzle',this)">Puzzle</div>
+    <div class="tab" onclick="filterGames('sports',this)">Sports</div>
+    <div class="tab" onclick="filterGames('clicker',this)">Clicker</div>
+    <div class="tab" onclick="filterGames('multiplayer',this)">Multiplayer</div>
+  </div>
+
+  <div class="games-grid" id="gamesGrid">
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Slope','https://classroom-6x-online.github.io/game/slope3')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e0d,#1a4a1a);">🌀</div>
+      <div class="hot-badge">HOT</div>
+      <div class="game-info"><div class="game-title">Slope</div><div class="game-tag">Arcade · Endless Runner</div></div>
+    </div>
+
+    <div class="game-card" data-cat="action" onclick="openGame('1v1.LOL','https://classroom-6x-online.github.io/game/1v1-lol')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#1a0d0d,#3a1a1a);">🔫</div>
+      <div class="hot-badge">HOT</div>
+      <div class="game-info"><div class="game-title">1v1.LOL</div><div class="game-tag">Action · Build & Shoot</div></div>
+    </div>
+
+    <div class="game-card" data-cat="racing" onclick="openGame('Drift Hunters','https://classroom-6x-online.github.io/game/drift-hunters')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#1a1a0d,#3a3a1a);">🚗</div>
+      <div class="game-info"><div class="game-title">Drift Hunters</div><div class="game-tag">Racing · Drifting</div></div>
+    </div>
+
+    <div class="game-card" data-cat="sports" onclick="openGame('Retro Bowl','https://classroom-6x-online.github.io/game/retro-bowl')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d1a2e,#1a2e4a);">🏈</div>
+      <div class="hot-badge">HOT</div>
+      <div class="game-info"><div class="game-title">Retro Bowl</div><div class="game-tag">Sports · American Football</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Run 3','https://classroom-6x-online.github.io/game/run-3')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d0d2e,#1a1a4a);">🏃</div>
+      <div class="game-info"><div class="game-title">Run 3</div><div class="game-tag">Arcade · Endless Tunnel</div></div>
+    </div>
+
+    <div class="game-card" data-cat="clicker" onclick="openGame('Cookie Clicker','https://classroom-6x-online.github.io/game/cookie-clicker')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e1a0d,#4a2e1a);">🍪</div>
+      <div class="game-info"><div class="game-title">Cookie Clicker</div><div class="game-tag">Clicker · Idle</div></div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle" onclick="openGame('2048','https://classroom-6x-online.github.io/game/2048')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e2e0d,#4a4a1a);">🔢</div>
+      <div class="game-info"><div class="game-title">2048</div><div class="game-tag">Puzzle · Number Merge</div></div>
+    </div>
+
+    <div class="game-card" data-cat="racing" onclick="openGame('Moto X3M','https://classroom-6x-online.github.io/game/moto-x3m')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e0d0d,#4a1a1a);">🏍️</div>
+      <div class="hot-badge">HOT</div>
+      <div class="game-info"><div class="game-title">Moto X3M</div><div class="game-tag">Racing · Bike Stunts</div></div>
+    </div>
+
+    <div class="game-card" data-cat="multiplayer" onclick="openGame('Shell Shockers','https://classroom-6x-online.github.io/game/shell-shockers')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e2e0d,#4a3a1a);">🥚</div>
+      <div class="game-info"><div class="game-title">Shell Shockers</div><div class="game-tag">Multiplayer · FPS</div></div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle" onclick="openGame('Geometry Dash','https://classroom-6x-online.github.io/game/geometry-dash')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#1a0d2e,#2e1a4a);">⬛</div>
+      <div class="game-info"><div class="game-title">Geometry Dash</div><div class="game-tag">Puzzle · Rhythm</div></div>
+    </div>
+
+    <div class="game-card" data-cat="sports" onclick="openGame('Basketball Stars','https://classroom-6x-online.github.io/game/basketball-stars')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e1a0d,#4a2e0d);">🏀</div>
+      <div class="game-info"><div class="game-title">Basketball Stars</div><div class="game-tag">Sports · 1v1</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Stickman Hook','https://classroom-6x-online.github.io/game/stickmanhook')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e2e,#1a4a4a);">🕷️</div>
+      <div class="game-info"><div class="game-title">Stickman Hook</div><div class="game-tag">Arcade · Swing</div></div>
+    </div>
+
+    <div class="game-card" data-cat="racing" onclick="openGame('Drive Mad','https://classroom-6x-online.github.io/game/drive-mad')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#1a0d2e,#3a1a4a);">🚙</div>
+      <div class="game-info"><div class="game-title">Drive Mad</div><div class="game-tag">Racing · Physics</div></div>
+    </div>
+
+    <div class="game-card" data-cat="action" onclick="openGame('Funny Shooter 2','https://classroom-6x-online.github.io/game/funny-shooter-2')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e0d,#1a4a2e);">🎯</div>
+      <div class="game-info"><div class="game-title">Funny Shooter 2</div><div class="game-tag">Action · FPS</div></div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle" onclick="openGame('Fireboy and Watergirl','https://classroom-6x-online.github.io/game/fireboy-and-watergirl-1')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e1a0d,#0d1a2e);">🔥</div>
+      <div class="game-info"><div class="game-title">Fireboy & Watergirl</div><div class="game-tag">Puzzle · Co-op</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('OvO Dimensions','https://classroom-6x-online.github.io/game/ovo-dimensions')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d0d0d,#2a2a2a);">⚡</div>
+      <div class="game-info"><div class="game-title">OvO Dimensions</div><div class="game-tag">Arcade · Platformer</div></div>
+    </div>
+
+    <div class="game-card" data-cat="racing" onclick="openGame('Drift Boss','https://classroom-6x-online.github.io/game/drift-boss')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e1a0d,#4a2a0d);">🏁</div>
+      <div class="game-info"><div class="game-title">Drift Boss</div><div class="game-tag">Racing · One-tap Drift</div></div>
+    </div>
+
+    <div class="game-card" data-cat="action" onclick="openGame('Getaway Shootout','https://classroom-6x-online.github.io/game/getaway-shootout')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e0d1a,#4a1a2e);">💨</div>
+      <div class="game-info"><div class="game-title">Getaway Shootout</div><div class="game-tag">Action · Multiplayer</div></div>
+    </div>
+
+    <div class="game-card" data-cat="sports" onclick="openGame('A Small World Cup','https://classroom-6x-online.github.io/game/a-small-world-cup')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e1a,#1a4a2e);">⚽</div>
+      <div class="game-info"><div class="game-title">A Small World Cup</div><div class="game-tag">Sports · Soccer</div></div>
+    </div>
+
+    <div class="game-card" data-cat="multiplayer" onclick="openGame('Paper.io 2','https://classroom-6x-online.github.io/game/paper-io-2')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d1a2e,#2e0d4a);">📄</div>
+      <div class="game-info"><div class="game-title">Paper.io 2</div><div class="game-tag">Multiplayer · Territory</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Cluster Rush','https://classroom-6x-online.github.io/game/cluster-rush')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e0d0d,#4a1a0d);">🚛</div>
+      <div class="game-info"><div class="game-title">Cluster Rush</div><div class="game-tag">Arcade · Parkour</div></div>
+    </div>
+
+    <div class="game-card" data-cat="clicker" onclick="openGame('Monkey Mart','https://classroom-6x-online.github.io/game/monkey-mart')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e2a0d,#4a3a0d);">🐒</div>
+      <div class="game-info"><div class="game-title">Monkey Mart</div><div class="game-tag">Clicker · Simulation</div></div>
+    </div>
+
+    <div class="game-card" data-cat="sports" onclick="openGame('Basket Random','https://classroom-6x-online.github.io/game/basket-random')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e1a0d,#4a2e0d);">🏀</div>
+      <div class="game-info"><div class="game-title">Basket Random</div><div class="game-tag">Sports · Chaotic</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Dreadhead Parkour','https://classroom-6x-online.github.io/game/dreadhead-parkour')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d0d1a,#1a1a2e);">🏃</div>
+      <div class="game-info"><div class="game-title">Dreadhead Parkour</div><div class="game-tag">Arcade · Parkour</div></div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle" onclick="openGame('G-Switch 3','https://classroom-6x-online.github.io/game/gswitch')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d1a2e,#1a2e4a);">🔄</div>
+      <div class="game-info"><div class="game-title">G-Switch 3</div><div class="game-tag">Puzzle · Gravity Flip</div></div>
+    </div>
+
+    <div class="game-card" data-cat="action" onclick="openGame('Rooftop Snipers 2','https://classroom-6x-online.github.io/game/rooftop-snipers-2')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e0d,#2e4a0d);">🎯</div>
+      <div class="game-info"><div class="game-title">Rooftop Snipers 2</div><div class="game-tag">Action · 2 Player</div></div>
+    </div>
+
+    <div class="game-card" data-cat="racing" onclick="openGame('Hill Climb Racing','https://classroom-6x-online.github.io/game/hill-climb-racing')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#1a2e0d,#2e4a1a);">⛰️</div>
+      <div class="game-info"><div class="game-title">Hill Climb Racing</div><div class="game-tag">Racing · Physics</div></div>
+    </div>
+
+    <div class="game-card" data-cat="action" onclick="openGame('Friday Night Funkin','https://classroom-6x-online.github.io/game/friday-night-funkin')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e0d2e,#4a1a4a);">🎵</div>
+      <div class="game-info"><div class="game-title">Friday Night Funkin</div><div class="game-tag">Action · Rhythm</div></div>
+    </div>
+
+    <div class="game-card" data-cat="clicker" onclick="openGame('Idle Miner','https://classroom-6x-online.github.io/game/idle-miner')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#1a1a1a,#2e2e2e);">⛏️</div>
+      <div class="game-info"><div class="game-title">Idle Miner</div><div class="game-tag">Clicker · Idle</div></div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle" onclick="openGame('Bob the Robber 4','https://classroom-6x-online.github.io/game/bob-the-robber-4')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d0d1a,#1a1a3a);">🕵️</div>
+      <div class="game-info"><div class="game-title">Bob the Robber 4</div><div class="game-tag">Puzzle · Stealth</div></div>
+    </div>
+
+    <div class="game-card" data-cat="multiplayer" onclick="openGame('Bloons Tower Defense 3','https://classroom-6x-online.github.io/game/bloons-tower-defense-3')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#2e0d0d,#4a1a0d);">🎈</div>
+      <div class="game-info"><div class="game-title">Bloons TD 3</div><div class="game-tag">Strategy · Tower Defense</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Electron Dash','https://classroom-6x-online.github.io/game/electron-dash')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d1a2e,#2e0d4a);">⚡</div>
+      <div class="game-info"><div class="game-title">Electron Dash</div><div class="game-tag">Arcade · Neon Runner</div></div>
+    </div>
+
+    <div class="game-card" data-cat="sports" onclick="openGame('Football Masters','https://classroom-6x-online.github.io/game/football-masters')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e0d,#1a4a1a);">⚽</div>
+      <div class="game-info"><div class="game-title">Football Masters</div><div class="game-tag">Sports · Soccer</div></div>
+    </div>
+
+    <div class="game-card" data-cat="arcade" onclick="openGame('Only Up Parkour','https://classroom-6x-online.github.io/game/only-up-3d-parkour-go-ascend')">
+      <div class="game-thumb" style="background:linear-gradient(135deg,#0d2e2e,#1a4a4a);">⬆️</div>
+      <div class="game-info"><div class="game-title">Only Up Parkour</div><div class="game-tag">Arcade · 3D Platformer</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="handleModalClick(event)">
+  <div class="modal" id="gameModal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Game</div>
+      <div class="modal-actions">
+        <button class="fullscreen-btn" onclick="goFullscreen()">⛶ Fullscreen</button>
+        <button class="close-btn" onclick="closeGame()">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  function filterGames(cat, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.game-card').forEach(c => {
+      c.style.display = (cat === 'all' || c.dataset.cat === cat) ? '' : 'none';
+    });
+  }
+
+  function handleModalClick(e) {
+    if (e.target === document.getElementById('modalBg')) closeGame();
+  }
+
+  let currentIframe = null;
+
+  function openGame(title, url) {
+    document.getElementById('modalTitle').textContent = title;
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.className = 'game-iframe';
+    iframe.allow = 'fullscreen';
+    iframe.allowFullscreen = true;
+    body.appendChild(iframe);
+    currentIframe = iframe;
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeGame() {
+    document.getElementById('modalBg').classList.remove('open');
+    document.getElementById('modalBody').innerHTML = '';
+    currentIframe = null;
+  }
+
+  function goFullscreen() {
+    if (currentIframe) {
+      if (currentIframe.requestFullscreen) currentIframe.requestFullscreen();
+      else if (currentIframe.webkitRequestFullscreen) currentIframe.webkitRequestFullscreen();
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeGame();
+  });
+</script>
