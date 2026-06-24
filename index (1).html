@@ -1,0 +1,367 @@
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0f0f1a; color: #e0e0ff; min-height: 100vh; }
+
+  .top-bar { background: #1a1a2e; border-bottom: 1px solid #2a2a4a; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-size: 18px; font-weight: 700; color: #7c83fd; letter-spacing: 1px; }
+  .logo span { color: #fff; }
+  .nav-links { display: flex; gap: 18px; font-size: 13px; }
+  .nav-links a { color: #aaa; text-decoration: none; cursor: pointer; }
+  .nav-links a:hover { color: #7c83fd; }
+  .badge { background: #2a2a4a; border: 1px solid #3a3a5a; border-radius: 20px; padding: 3px 10px; font-size: 12px; color: #7c83fd; }
+
+  .hero { text-align: center; padding: 36px 20px 24px; }
+  .hero h1 { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #7c83fd, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px; }
+  .hero p { color: #888; font-size: 14px; }
+
+  .tabs { display: flex; gap: 8px; padding: 0 20px 20px; justify-content: center; flex-wrap: wrap; }
+  .tab { background: #1a1a2e; border: 1px solid #2a2a4a; border-radius: 20px; padding: 6px 16px; font-size: 13px; cursor: pointer; color: #aaa; transition: all 0.2s; }
+  .tab:hover, .tab.active { background: #7c83fd; border-color: #7c83fd; color: #fff; }
+
+  /* Bigger cards — 3 cols on desktop, 2 on tablet, 1 on mobile */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
+    padding: 0 20px 40px;
+  }
+
+  .game-card {
+    background: #1a1a2e;
+    border: 1px solid #2a2a4a;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  }
+  .game-card:hover {
+    transform: translateY(-4px);
+    border-color: #7c83fd;
+    box-shadow: 0 8px 32px rgba(124,131,253,0.18);
+  }
+
+  /* Thumbnail area — taller for bigger cards */
+  .game-thumb {
+    height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    overflow: hidden;
+    position: relative;
+  }
+  /* If a thumbnail image is set, it fills the area */
+  .game-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .game-info { padding: 14px 16px 16px; }
+  .game-title { font-size: 15px; font-weight: 700; color: #e0e0ff; margin-bottom: 4px; }
+  .game-tag { font-size: 12px; color: #666; }
+
+  /* Modal */
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 100; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: #1a1a2e; border: 1px solid #3a3a5a; border-radius: 18px; width: 95vw; max-width: 960px; height: 90vh; overflow: hidden; display: flex; flex-direction: column; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid #2a2a4a; flex-shrink: 0; }
+  .modal-title { font-size: 15px; font-weight: 700; color: #e0e0ff; }
+  .close-btn { background: #2a2a4a; border: none; color: #aaa; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
+  .close-btn:hover { background: #3a3a5a; color: #fff; }
+  .modal-body { flex: 1; overflow: hidden; }
+  .game-iframe { width: 100%; height: 100%; border: none; display: block; }
+</style>
+
+<div style="min-height:100vh; background:#0f0f1a;">
+  <div class="top-bar">
+    <div class="logo">Study<span>Zone</span> 🎓</div>
+    <div class="nav-links">
+      <a>Home</a>
+      <a>About</a>
+    </div>
+    <div class="badge">Free to Play</div>
+  </div>
+
+  <div class="hero">
+    <h1>Play & Learn</h1>
+    <p>Brain-training games to keep your mind sharp ✨</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="filterGames('all',this)">All Games</div>
+    <div class="tab" onclick="filterGames('arcade',this)">Arcade</div>
+    <div class="tab" onclick="filterGames('puzzle',this)">Puzzle</div>
+    <div class="tab" onclick="filterGames('action',this)">Action</div>
+  </div>
+
+  <div class="games-grid" id="gamesGrid">
+
+    <!--
+    =====================================================
+    HOW TO ADD A GAME:
+      data-url   = the URL to embed in the iframe
+      data-title = title shown in the popup header
+      data-cat   = arcade | puzzle | action
+      data-emoji = emoji shown if no image thumbnail
+
+    THUMBNAIL OPTIONS (pick one):
+      A) Emoji only  — leave the <div class="game-thumb"> as-is with just an emoji
+      B) Image file  — replace the emoji with: <img src="YOUR_IMAGE.jpg" alt="Game Name">
+      C) Image URL   — replace the emoji with: <img src="https://..." alt="Game Name">
+    =====================================================
+    -->
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 1"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d1a2e;">🎮</div>
+      <div class="game-info">
+        <div class="game-title">Game 1</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 2"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a0d2e;">🕹️</div>
+      <div class="game-info">
+        <div class="game-title">Game 2</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 3"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d2010;">🧩</div>
+      <div class="game-info">
+        <div class="game-title">Game 3</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 4"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a1a0d;">🔢</div>
+      <div class="game-info">
+        <div class="game-title">Game 4</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="action"
+         data-url="YOUR_URL_HERE" data-title="Game 5"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#200d0d;">⚔️</div>
+      <div class="game-info">
+        <div class="game-title">Game 5</div>
+        <div class="game-tag">Action</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="action"
+         data-url="YOUR_URL_HERE" data-title="Game 6"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d1a10;">🏹</div>
+      <div class="game-info">
+        <div class="game-title">Game 6</div>
+        <div class="game-tag">Action</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 7"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a0d10;">🚀</div>
+      <div class="game-info">
+        <div class="game-title">Game 7</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 8"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d0d1a;">♟️</div>
+      <div class="game-info">
+        <div class="game-title">Game 8</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="action"
+         data-url="YOUR_URL_HERE" data-title="Game 9"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a2010;">💣</div>
+      <div class="game-info">
+        <div class="game-title">Game 9</div>
+        <div class="game-tag">Action</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 10"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d1a1a;">🏎️</div>
+      <div class="game-info">
+        <div class="game-title">Game 10</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 11"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a1a0d;">🔍</div>
+      <div class="game-info">
+        <div class="game-title">Game 11</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="action"
+         data-url="YOUR_URL_HERE" data-title="Game 12"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#200d1a;">🥊</div>
+      <div class="game-info">
+        <div class="game-title">Game 12</div>
+        <div class="game-tag">Action</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 13"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d200d;">🎯</div>
+      <div class="game-info">
+        <div class="game-title">Game 13</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 14"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a0d1a;">🎱</div>
+      <div class="game-info">
+        <div class="game-title">Game 14</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="action"
+         data-url="YOUR_URL_HERE" data-title="Game 15"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d1010;">🌊</div>
+      <div class="game-info">
+        <div class="game-title">Game 15</div>
+        <div class="game-tag">Action</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 16"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a1020;">🎠</div>
+      <div class="game-info">
+        <div class="game-title">Game 16</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 17"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#0d1a0d;">🔮</div>
+      <div class="game-info">
+        <div class="game-title">Game 17</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="action"
+         data-url="YOUR_URL_HERE" data-title="Game 18"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#200d20;">🦊</div>
+      <div class="game-info">
+        <div class="game-title">Game 18</div>
+        <div class="game-tag">Action</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="arcade"
+         data-url="YOUR_URL_HERE" data-title="Game 19"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#10200d;">🌀</div>
+      <div class="game-info">
+        <div class="game-title">Game 19</div>
+        <div class="game-tag">Arcade</div>
+      </div>
+    </div>
+
+    <div class="game-card" data-cat="puzzle"
+         data-url="YOUR_URL_HERE" data-title="Game 20"
+         onclick="openIframe(this)">
+      <div class="game-thumb" style="background:#1a0d0d;">🏰</div>
+      <div class="game-info">
+        <div class="game-title">Game 20</div>
+        <div class="game-tag">Puzzle</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg" onclick="handleModalClick(event)">
+  <div class="modal" id="gameModal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Game</div>
+      <button class="close-btn" onclick="closeGame()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+  function filterGames(cat, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.game-card').forEach(c => {
+      c.style.display = (cat === 'all' || c.dataset.cat === cat) ? '' : 'none';
+    });
+  }
+
+  function handleModalClick(e) {
+    if (e.target === document.getElementById('modalBg')) closeGame();
+  }
+
+  function openIframe(card) {
+    const url   = card.dataset.url;
+    const title = card.dataset.title;
+
+    if (!url || url === 'YOUR_URL_HERE') {
+      alert('No URL set for this game yet — set data-url="https://..." on the card.');
+      return;
+    }
+
+    document.getElementById('modalTitle').textContent = title;
+    const body = document.getElementById('modalBody');
+    body.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.className = 'game-iframe';
+    iframe.allow = 'fullscreen';
+    body.appendChild(iframe);
+    document.getElementById('modalBg').classList.add('open');
+  }
+
+  function closeGame() {
+    document.getElementById('modalBg').classList.remove('open');
+    document.getElementById('modalBody').innerHTML = '';
+  }
+</script>
